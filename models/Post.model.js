@@ -12,6 +12,6 @@ const postSchema = new Schema(
   }
 );
 
-const Post = model("Post", postSchema);
+const Post = model("Post", postSchema); // Here is where we create a new collection in MongoDB
 
 module.exports = Post;

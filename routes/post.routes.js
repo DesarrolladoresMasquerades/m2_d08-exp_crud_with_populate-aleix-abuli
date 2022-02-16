@@ -11,7 +11,7 @@ const Post = require("../models/Post.model");
 router.get("/post-create", (req, res) => {
   User.find()
     .then((dbUsers) => {
-      res.render("posts/create", { dbUsers });
+      res.render("posts/create", {dbUsers});
     })
     .catch((err) => console.log(`Err while displaying post input page: ${err}`));
 });
@@ -22,19 +22,55 @@ router.get("/post-create", (req, res) => {
 
 // <form action="/post-create" method="POST">
 
-// ... your code here
+router.post('/post-create', (req,res)=>{
+  const title = req.body.title;
+  const content = req.body.content;
+  const author = req.body.author;
+  // this is the short syntax for the lines above
+  // const {title, content, author} = req.body
+  // it's called "destructuring"
+
+  Post.create({title, content, author})
+  .then(newPost => {
+    User.findByIdAndUpdate(newPost.author,  // you are populating the user's posts
+      {$push: {posts: newPost._id}
+    }).then(() => res.redirect('/posts'))
+  })
+  .catch(error => {
+    console.log(error);
+  });
+})
 
 // ****************************************************************************************
 // GET route to display all the posts
 // ****************************************************************************************
 
-// ... your code here
+router.get('/posts', (req, res) => {
+  Post.find()
+  .populate('author')
+  .then((posts) => res.render('posts/list'), {posts})
+})
 
 // ****************************************************************************************
 // GET route for displaying the post details page
 // shows how to deep populate (populate the populated field)
 // ****************************************************************************************
 
-// ... your code here
+router.get('/post-details/:id', (req, res) => {
+  Post.findById(req.params.id)
+  .populate('author')
+  //.populate('comments')
+  .populate({
+    path: 'comments',
+    populate: {
+      path: 'author', // author of the COMMENT
+      model: 'User'
+    }
+  })
+  .then((post)=>{
+    res.render('posts/details', post);
+  })
+})
+
 
 module.exports = router;
